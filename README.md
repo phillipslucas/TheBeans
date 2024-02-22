@@ -14,4 +14,7 @@
 
 ## Features
 
--   TODO
+-   Will give your code the beans.
+-   Will give your life the beans.
+-   Will do your taxes the beans.
+
