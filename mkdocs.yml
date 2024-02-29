@@ -85,5 +85,5 @@ nav:
           - thebeans module: thebeans.md
           - common module: common.md
     -Labs:
-        - Lab 4 : docs/lab4.ipynb
+        - docs/lab4.ipynb
 
