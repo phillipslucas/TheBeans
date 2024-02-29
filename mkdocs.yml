@@ -84,3 +84,6 @@ nav:
     - API Reference:
           - thebeans module: thebeans.md
           - common module: common.md
+    -Labs:
+        - Lab 4 : lab4.ipynb
+        
