@@ -81,9 +81,10 @@ nav:
     - Report Issues: https://github.com/phillipslucas/TheBeans/issues
     - Examples:
         - examples/intro.ipynb
+        - Lab 4 : lab4.ipynb
     - API Reference:
           - thebeans module: thebeans.md
           - common module: common.md
     -Labs:
-        - Lab 4 : lab4.ipynb
-        
+        - Lab 4 : docs/lab4.ipynb
+
