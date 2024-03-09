@@ -26,3 +26,5 @@ class Map(ipyleaflet.Map):
         else:
             self.add(name)
 
+    def ad_layers_control(self, position='topright'):
+        self.add_control(ipyleaflet.LayersControl(position=position))
