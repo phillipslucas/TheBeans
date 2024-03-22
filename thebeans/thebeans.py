@@ -28,3 +28,33 @@ class Map(ipyleaflet.Map):
 
     def ad_layers_control(self, position='topright'):
         self.add_control(ipyleaflet.LayersControl(position=position))
+
+
+#3/18 lecuture
+    def add_geojson(self, data, name="geojson", **kwargs):
+        self.add_control(ipyleaflet.GeoJSON(data=data, name=name, **kwargs))
+
+        import json
+
+        if isinstance(data, str):
+            with open(data) as f:
+            data = json.load(f)
+        
+        if "hover_style" not in kwargs:
+          kwargs['hover_style'] = {
+              "color": "green",
+              "weight": 1,
+              "fillColor": "green",
+              "fillOpacity": 0.5
+          }
+
+        if "style" not in kwargs:
+            kwargs['style'] = {
+                "color": "#ff0000",
+                "weight": 1,
+                "fillColor": "green",
+                "fillOpacity": 0.5
+            }
+
+        layer = ipyleaflet.GeoJSON(data=data, name=name, **kwargs)
+        self.add(layer)
