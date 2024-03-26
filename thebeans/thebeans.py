@@ -7,11 +7,15 @@ import ipyleaflet
 from ipyleaflet import basemaps
 
 class Map(ipyleaflet.Map):
+    """_summary_
 
+    Args:
+        ipyleaflet (_type_): _description_
+    """    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.add_control(ipyleaflet.LayerControl())
-
+       
     def add_tile_layer(self, url, name, **kwargs):
         layer = ipyleaflet.TileLayer(url=url, name=name, **kwargs)
         self.add_layer(layer)
