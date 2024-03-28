@@ -43,7 +43,7 @@ class Map(ipyleaflet.Map):
             None
         """
         # if isinstance(name, str):
-        #     basemap = eval(f"basemaps.{name}").build_url() #eval is a function that evaluates a string as a python expression or turns string into obejct
+        #     basemap = eval(f"basemaps.{name}").build_url() #eval is a function that evaluates a string as a python expression or turns string into object
         #     self.add(basemap)
         # else:
         #     self.add(name)
