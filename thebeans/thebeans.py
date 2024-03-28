@@ -4,7 +4,7 @@
 #make sure the packages are installed in your environment
 
 import ipyleaflet
-from ipyleaflet import Map, marker, basemaps
+from ipyleaflet import Map
 
 class Map(ipyleaflet.Map):
     """Map class that inherits from ipyleaflet.Map.
