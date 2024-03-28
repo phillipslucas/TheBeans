@@ -47,7 +47,7 @@ class Map(ipyleaflet.Map):
         #     self.add(basemap)
         # else:
         #     self.add(name)
-        if instance(name, str):
+        if isinstance(name, str):
             url = eval(f"basemaps.{name}").build_url()
             self.add_tile_layer(url, name)
         else:
