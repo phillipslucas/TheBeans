@@ -13,7 +13,7 @@ class Map(ipyleaflet.Map):
         ipyleaflet (Map): The ipyleaflet.Map class.
     """    
     def __init__(self, center = (47.7511, -120.7401), zoom = 6, **kwargs):
-         """Initialize the map.
+        """Initialize the map.
 
         Args:
             center (list, optional): Set the center of the map. Defaults to WA [47.7511, -120.7401].
@@ -65,7 +65,7 @@ class Map(ipyleaflet.Map):
 #3/18 lecuture
     def add_geojson(self, data, name="geojson", **kwargs):
         self.add_control(ipyleaflet.GeoJSON(data=data, name=name, **kwargs))
-"""Adds a GeoJSON layer to the map.
+        """Adds a GeoJSON layer to the map.
 
         Args:
             data (str | dict): The GeoJSON data as a string or a dictionary.
@@ -95,7 +95,7 @@ class Map(ipyleaflet.Map):
         self.add(layer)
 
     def add_shp(self, data, name="shp", **kwargs):
-         """
+        """
         Adds a shapefile to the current map.
 
         Args:
