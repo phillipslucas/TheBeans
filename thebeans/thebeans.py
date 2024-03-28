@@ -75,7 +75,7 @@ class Map(ipyleaflet.Map):
 
         if isinstance(data, str):
             with open(data) as f:
-            data = json.load(f)
+                data = json.load(f)
         
         if "style" not in kwargs:
           kwargs['style'] = {
