@@ -77,9 +77,12 @@ nav:
     - Report Issues: https://github.com/phillipslucas/TheBeans/issues
     - Examples:
         - examples/intro.ipynb
+        - examples/ExampleBeans.ipynb
+        - examples/CSVtoDF.ipynb
     - API Reference:
           - thebeans module: thebeans.md
           - common module: common.md
+          - CSVtoDF module: CSVtoDF.md
     - Labs:
         - Labs/lab4.ipynb
         - Labs/lab5.ipynb
