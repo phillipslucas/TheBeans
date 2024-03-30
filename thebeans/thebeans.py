@@ -20,7 +20,7 @@ class Map(ipyleaflet.Map):
             zoom (int, optional): Set the zoom level of the map. Defaults to 6.
         """
         super().__init__(center = center, zoom = zoom, **kwargs)
-        self.add_control(ipyleaflet.LayerControl())
+        self.add_control(ipyleaflet.LayersControl())
 
           
     def add_tile_layer(self, url, name, **kwargs):
