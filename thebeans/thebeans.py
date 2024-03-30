@@ -62,7 +62,7 @@ class Map(ipyleaflet.Map):
         self.add_control(ipyleaflet.LayersControl(position=position))
 
 
-#3/18 lecuture
+    #3/18 lecuture
     def add_geojson(self, data, name="geojson", **kwargs):
         self.add_control(ipyleaflet.GeoJSON(data=data, name=name, **kwargs))
         """Adds a GeoJSON layer to the map.
