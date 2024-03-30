@@ -78,7 +78,7 @@ nav:
     - Examples:
         - examples/intro.ipynb
         - examples/ExampleBeans.ipynb
-        - examples/CSVtoDF.ipynb
+        - examples/csv.ipynb
     - API Reference:
           - thebeans module: thebeans.md
           - common module: common.md
