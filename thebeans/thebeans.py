@@ -22,7 +22,9 @@ class Map(ipyleaflet.Map):
         super().__init__(center = center, zoom = zoom, **kwargs)
         self.add_control(ipyleaflet.LayersControl())
 
-          
+        
+
+
     def add_tile_layer(self, url, name, **kwargs):
         layer = ipyleaflet.TileLayer(url=url, name=name, **kwargs)
         self.add_layer(layer)
@@ -117,3 +119,47 @@ class Map(ipyleaflet.Map):
                 data = shp.__geo_interface__
 
         self.add_geojson(data, name, **kwargs)
+    
+    # def add_image(self, url, bounds, name="image", **kwargs):
+    #     """
+    #     Adds an image to the current map.
+
+    #     Args:
+    #         url (str): The URL of the image.
+    #         bounds (list): The bounds of the image.
+    #         name (str, optional): The name of the image. Defaults to "image".
+    #         **kwargs: Arbitrary keyword arguments.
+
+    #     Returns:
+    #         None
+    #     """
+    #     import ipyleaflet
+
+    #     image = ipyleaflet.ImageOverlay(url=url, bounds=bounds, name=name, **kwargs)
+    #     self.add_layer(image)
+
+    def add_raster(self, data, name="raster", zoom_to_layer = True, **kwargs):
+        """
+        Adds a raster to the current map.
+
+        Args:
+            data (str): The path to the raster.
+            name (str, optional): The name of the raster. Defaults to "raster".
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            None
+        """
+       try:
+            from localtileserver import TileClient, get_leaflet_tile_layer
+        except:
+            raise ImportError("Please install the localtileserver package to use this method.")
+    
+        client = TileClient(data)
+        layer = get_leaflet_tile_layer(client, name = name, **kwargs)
+        self.add_layer(layer)
+    
+        if zoom_to_layer:
+            self.center = client.center()
+            self.zoom = client.default_zoom #already a number, no parenthsis needed
+            
