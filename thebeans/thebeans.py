@@ -3,8 +3,11 @@
 #This doc shows you how the package was built. This is where you build code 
 #make sure the packages are installed in your environment
 
+
 import ipyleaflet
-from ipyleaflet import Map
+from ipyleaflet import Map, basemaps, Marker
+import ipywidgets as widgets
+
 
 class Map(ipyleaflet.Map):
     """Map class that inherits from ipyleaflet.Map.
@@ -12,13 +15,19 @@ class Map(ipyleaflet.Map):
     Args:
         ipyleaflet (Map): The ipyleaflet.Map class.
     """    
-    def __init__(self, center = (47.7511, -120.7401), zoom = 6, **kwargs):
+    def __init__(self, basemap = basemaps.Strava.Run, center = (48.513,-120.218), zoom = 5, **kwargs):
         """Initialize the map.
 
         Args:
             center (list, optional): Set the center of the map. Defaults to WA [47.7511, -120.7401].
             zoom (int, optional): Set the zoom level of the map. Defaults to 6.
         """
+        if "scroll_wheel_zoom" not in kwargs:
+            kwargs["scroll_wheel_zoom"] = True
+
+        #add layer control not as straight forward. Need to pass to an object and consider it as a paramerter that you can pass. Ipyleaflet doesn't support.
+        
+
         super().__init__(center = center, zoom = zoom, **kwargs)
         self.add_control(ipyleaflet.LayersControl())
 
@@ -44,11 +53,7 @@ class Map(ipyleaflet.Map):
         Returns:
             None
         """
-        # if isinstance(name, str):
-        #     basemap = eval(f"basemaps.{name}").build_url() #eval is a function that evaluates a string as a python expression or turns string into object
-        #     self.add(basemap)
-        # else:
-        #     self.add(name)
+    
         if isinstance(name, str):
             url = eval(f"basemaps.{name}").build_url()
             self.add_tile_layer(url, name)
@@ -66,7 +71,7 @@ class Map(ipyleaflet.Map):
 
     #3/18 lecuture
     def add_geojson(self, data, name="geojson", **kwargs):
-        self.add_control(ipyleaflet.GeoJSON(data=data, name=name, **kwargs))
+        #self.add_control(ipyleaflet.GeoJSON(data=data, name=name, **kwargs))
         """Adds a GeoJSON layer to the map.
 
         Args:
@@ -74,11 +79,20 @@ class Map(ipyleaflet.Map):
             name (str, optional): The name of the layer. Defaults to "geojson".
         """
         import json
+        import requests
 
+#determines if the data argument is a file path, added try to avoid url error
         if isinstance(data, str):
-            with open(data) as f:
-                data = json.load(f)
-        
+            try:
+                with open(data) as f:
+                    data = json.load(f)
+            except FileNotFoundError:
+                try: 
+                    data = json.loads(data)
+                except json.JSONDecodeError:
+                    response = requests.get(data)
+                    data = response.json()
+
         if "style" not in kwargs:
           kwargs['style'] = {
               "color": "green",
@@ -120,46 +134,52 @@ class Map(ipyleaflet.Map):
 
         self.add_geojson(data, name, **kwargs)
     
-    # def add_image(self, url, bounds, name="image", **kwargs):
-    #     """
-    #     Adds an image to the current map.
-
-    #     Args:
-    #         url (str): The URL of the image.
-    #         bounds (list): The bounds of the image.
-    #         name (str, optional): The name of the image. Defaults to "image".
-    #         **kwargs: Arbitrary keyword arguments.
-
-    #     Returns:
-    #         None
-    #     """
-    #     import ipyleaflet
-
-    #     image = ipyleaflet.ImageOverlay(url=url, bounds=bounds, name=name, **kwargs)
-    #     self.add_layer(image)
-
-    def add_raster(self, data, name="raster", zoom_to_layer = True, **kwargs):
+    def add_image(self, url, bounds, name="image", **kwargs):
         """
-        Adds a raster to the current map.
+        Adds an image to the current map.
 
         Args:
-            data (str): The path to the raster.
-            name (str, optional): The name of the raster. Defaults to "raster".
+            url (str): The URL of the image.
+            bounds (list): The bounds of the image.
+            name (str, optional): The name of the image. Defaults to "image".
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
             None
         """
-       try:
+        import ipyleaflet
+
+        image = ipyleaflet.ImageOverlay(url=url, bounds=bounds, name=name, **kwargs)
+        self.add_layer(image)
+
+    def add_raster(self, data, name="raster", zoom_to_layer=True, **kwargs):
+        """Adds a raster layer to the map.
+
+        Args:
+            data (str): The path to the raster file.
+            name (str, optional): The name of the layer. Defaults to "raster".
+        """
+
+        try:
             from localtileserver import TileClient, get_leaflet_tile_layer
-        except:
-            raise ImportError("Please install the localtileserver package to use this method.")
-    
+        except ImportError:
+            raise ImportError("Please install the localtileserver package.")
+
         client = TileClient(data)
-        layer = get_leaflet_tile_layer(client, name = name, **kwargs)
-        self.add_layer(layer)
-    
+        layer = get_leaflet_tile_layer(client, name=name, **kwargs)
+        self.add(layer)
+
         if zoom_to_layer:
             self.center = client.center()
-            self.zoom = client.default_zoom #already a number, no parenthsis needed
+            self.zoom = client.default_zoom
+    def add_zoom_slider(self):
+        """
+        Adds a zoom slider to the map.
+        """
+        from ipyleaflet import WidgetControl
+
+        zoom_slider = ipyleaflet.ZoomControl(position='topright')
+        self.add_control(zoom_slider)
+#construct slider and control in the source code, embedd as a method in the Map class
+#thebeans ideas - change detection from ifsar data for drawn extent, output statistics
             
