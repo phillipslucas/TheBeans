@@ -25,7 +25,7 @@ class Map(ipyleaflet.Map):
         if "scroll_wheel_zoom" not in kwargs:
             kwargs["scroll_wheel_zoom"] = True
 
-        #add layer control not as straight forward. Need to pass to an object and consider it as a paramerter that you can pass. Ipyleaflet doesn't support.
+        #add layer control not as straight forward. Need to pass to an object and consider it as a parameter that you can pass. Ipyleaflet doesn't support.
         
 
         super().__init__(center = center, zoom = zoom, **kwargs)
@@ -180,6 +180,6 @@ class Map(ipyleaflet.Map):
 
         zoom_slider = ipyleaflet.ZoomControl(position='topright')
         self.add_control(zoom_slider)
-#construct slider and control in the source code, embedd as a method in the Map class
+#construct slider and control in the source code, embed as a method in the Map class
 #thebeans ideas - change detection from ifsar data for drawn extent, output statistics
             
