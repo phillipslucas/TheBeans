@@ -76,8 +76,9 @@ nav:
     - Changelog: changelog.md
     - Report Issues: https://github.com/phillipslucas/TheBeans/issues
     - Examples:
-        - examples/ExampleBeans.ipynb
+        - examples/ExampleBeansLab7.ipynb
         - examples/csv.ipynb
+        - examples/vector.ipynb
     - API Reference:
           - thebeans module: thebeans.md
           - common module: common.md
