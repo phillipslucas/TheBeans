@@ -80,18 +80,24 @@ class Map(ipyleaflet.Map):
         """
         import json
         import requests
+        import urllib.parse
 
 #determines if the data argument is a file path, added try to avoid url error
         if isinstance(data, str):
-            try:
-                with open(data) as f:
-                    data = json.load(f)
-            except FileNotFoundError:
-                try: 
+            url = urllib.parse.urlparse(data)
+            if url.scheme in ('http', 'https'):
+                response = requests.get(data)
+                data = response.json()
+            else:
+                try:
+                    with open(data) as f:
+                        data = json.load(f)
+                except FileNotFoundError:
+                    # try: 
                     data = json.loads(data)
-                except json.JSONDecodeError:
-                    response = requests.get(data)
-                    data = response.json()
+                    # except json.JSONDecodeError:
+                    #     response = requests.get(data)
+                    #     data = response.json()
 
         if "style" not in kwargs:
           kwargs['style'] = {
@@ -180,6 +186,60 @@ class Map(ipyleaflet.Map):
 
         zoom_slider = ipyleaflet.ZoomControl(position='topright')
         self.add_control(zoom_slider)
+
+
+
+
 #construct slider and control in the source code, embed as a method in the Map class
 #thebeans ideas - change detection from ifsar data for drawn extent, output statistics
-            
+    def add_opacity_slider(self, layer):
+        """
+        Adds an opacity slider to the map.
+
+        Args:
+            layer (object): The layer to which the opacity slider will be applied.
+        """
+        from ipywidgets import IntSlider, jslink, VBox
+
+        layer = self.layers[layer_index]
+        opacity_slider = widgets.FloatSlider(description='Opacity:', min=0, max=100, value=layer.opacity)
+        #jslink((opacity_slider, 'value'), (layer, 'opacity'))
+        #want to use observe because more universal than jslink
+
+        control = WidgetControl(widget=opacity_slider, position='topright')
+        self.add_control(control)
+        
+        def update_opacity(change):
+            self.layer[layer.index].opacity, "value"
+        opacity_slider.observe(update_opacity, 'value')
+
+
+def add_basemap_gui(self, basemaps=None, postition = 'topright'):
+    """
+    Adds a basemap selector to the map.
+
+    Args:
+        basemaps (dict, optional): A dictionary of basemaps. Defaults to None.
+        postition (str, optional): The position of the basemap selector. Defaults to 'topright'.
+    """
+    from ipywidgets import Dropdown
+    from ipyleaflet import WidgetControl
+
+    if basemaps is None:
+        basemaps = {
+            "OpenStreetMap": basemaps.OpenStreetMap.Mapnik,
+            "ESRI": basemaps.Esri.WorldImagery,
+            "Strava": basemaps.Strava.All,
+            "OpenTopoMap": basemaps.OpenTopoMap.Standard
+}
+
+    dropdown = Dropdown(options=basemaps, description='Basemap:')
+    control = WidgetControl(widget=dropdown, position=position)
+    self.add_control(control)
+
+    def on_click(change):
+        basemap = change['new']
+        self.layers = self.layers[:1]
+        self.add_basemap(basemap)
+
+    dropdown.observe(on_click, 'value')
