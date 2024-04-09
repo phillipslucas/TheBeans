@@ -215,13 +215,13 @@ class Map(ipyleaflet.Map):
         opacity_slider.observe(update_opacity, 'value')
 
 
-def add_basemap_gui(self, basemaps=None, postition = 'topright'):
+def add_basemap_gui(self, basemaps=None, position = 'topright'):
     """
     Adds a basemap selector to the map.
 
     Args:
         basemaps (dict, optional): A dictionary of basemaps. Defaults to None.
-        postition (str, optional): The position of the basemap selector. Defaults to 'topright'.
+        position (str, optional): The position of the basemap selector. Defaults to 'topright'.
     """
     from ipywidgets import Dropdown
     from ipyleaflet import WidgetControl
