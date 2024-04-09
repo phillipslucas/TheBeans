@@ -155,7 +155,7 @@ class Map(ipyleaflet.Map):
         """
         import ipyleaflet
 
-        image = ipyleaflet.ImageOverlay(url=url, bounds=bounds, name=name, **kwargs)
+        image = ipyleaflet.ImageOverlay(url=url, bounds=bounds, name="image", **kwargs)
         self.add_layer(image)
 
     def add_raster(self, data, name="raster", zoom_to_layer=True, **kwargs):
@@ -165,7 +165,8 @@ class Map(ipyleaflet.Map):
             data (str): The path to the raster file.
             name (str, optional): The name of the layer. Defaults to "raster".
         """
-
+        import localtileserver
+        
         try:
             from localtileserver import TileClient, get_leaflet_tile_layer
         except ImportError:
