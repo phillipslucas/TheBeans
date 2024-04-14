@@ -5,7 +5,7 @@
 
 
 import ipyleaflet
-from ipyleaflet import Map, basemaps, Marker
+from ipyleaflet import Map, basemaps, Marker, WidgetControl
 import ipywidgets as widgets
 
 
@@ -27,11 +27,20 @@ class Map(ipyleaflet.Map):
 
         #add layer control not as straight forward. Need to pass to an object and consider it as a parameter that you can pass. Ipyleaflet doesn't support.
         
+        if "scroll_wheel_zoom" not in kwargs:
+            kwargs["scroll_wheel_zoom"] = True
 
-        super().__init__(center = center, zoom = zoom, **kwargs)
-        self.add_control(ipyleaflet.LayersControl())
+        if "add_layer_control" not in kwargs:
+            layer_control_flag = True
+        else:
+            layer_control_flag = kwargs["add_layer_control"]
+        kwargs.pop("add_layer_control", None)
 
-        
+        super().__init__(center=center, zoom=zoom, **kwargs)
+        if layer_control_flag:
+            self.add_layers_control()
+
+        self.add_toolbar()
 
 
     def add_tile_layer(self, url, name, **kwargs):
@@ -71,7 +80,6 @@ class Map(ipyleaflet.Map):
 
     #3/18 lecuture
     def add_geojson(self, data, name="geojson", **kwargs):
-        #self.add_control(ipyleaflet.GeoJSON(data=data, name=name, **kwargs))
         """Adds a GeoJSON layer to the map.
 
         Args:
@@ -79,39 +87,16 @@ class Map(ipyleaflet.Map):
             name (str, optional): The name of the layer. Defaults to "geojson".
         """
         import json
-        import requests
-        import urllib.parse
 
-#determines if the data argument is a file path, added try to avoid url error
         if isinstance(data, str):
-            url = urllib.parse.urlparse(data)
-            if url.scheme in ('http', 'https'):
-                response = requests.get(data)
-                data = response.json()
-            else:
-                try:
-                    with open(data) as f:
-                        data = json.load(f)
-                except FileNotFoundError:
-                    # try: 
-                    data = json.loads(data)
-                    # except json.JSONDecodeError:
-                    #     response = requests.get(data)
-                    #     data = response.json()
+            with open(data) as f:
+                data = json.load(f)
 
         if "style" not in kwargs:
-          kwargs['style'] = {
-              "color": "green",
-              "weight": 1,
-              "fillColor": "ff0000",
-              "fillOpacity": 0.0
-          }
+            kwargs["style"] = {"color": "blue", "weight": 1, "fillOpacity": 0}
 
         if "hover_style" not in kwargs:
-            kwargs['hover_style'] = {
-                "fillColor": "#ff0000",
-                "fillOpacity": 0.5
-            }
+            kwargs["hover_style"] = {"fillColor": "#ff0000", "fillOpacity": 0.5}
 
         layer = ipyleaflet.GeoJSON(data=data, name=name, **kwargs)
         self.add(layer)
@@ -139,6 +124,7 @@ class Map(ipyleaflet.Map):
                 data = shp.__geo_interface__
 
         self.add_geojson(data, name, **kwargs)
+
     
     def add_image(self, url, bounds, name="image", **kwargs):
         """
@@ -189,58 +175,146 @@ class Map(ipyleaflet.Map):
         self.add_control(zoom_slider)
 
 
-
-
-#construct slider and control in the source code, embed as a method in the Map class
-#thebeans ideas - change detection from ifsar data for drawn extent, output statistics
-    def add_opacity_slider(self, layer):
-        """
-        Adds an opacity slider to the map.
+    def add_widget(self, widget, position="topright"):
+        """Adds a widget to the map.
 
         Args:
-            layer (object): The layer to which the opacity slider will be applied.
+            widget (object): The widget to be added.
+            position (str, optional): The position of the widget. Defaults to "topright".
         """
-        from ipywidgets import IntSlider, jslink, VBox
+        control = ipyleaflet.WidgetControl(widget=widget, position=position)
+        self.add(control)
 
+    def add_opacity_slider(
+         self, layer_index=-1, description="Opacity", position="topright"
+    ):
+        """Adds an opacity slider to the map.
+
+        Args:
+            layer (object): The layer to which the opacity slider is added.
+            description (str, optional): The description of the opacity slider. Defaults to "Opacity".
+            position (str, optional): The position of the opacity slider. Defaults to "topright".
+        """
         layer = self.layers[layer_index]
-        opacity_slider = widgets.FloatSlider(description='Opacity:', min=0, max=100, value=layer.opacity)
-        #jslink((opacity_slider, 'value'), (layer, 'opacity'))
-        #want to use observe because more universal than jslink
+        opacity_slider = widgets.FloatSlider(
+            description=description,
+            min=0,
+            max=1,
+            value=layer.opacity,
+            style={"description_width": "initial"},
+        )
 
-        control = WidgetControl(widget=opacity_slider, position='topright')
-        self.add_control(control)
-        
         def update_opacity(change):
-            self.layer[layer.index].opacity, "value"
-        opacity_slider.observe(update_opacity, 'value')
+            layer.opacity = change["new"]
 
+        opacity_slider.observe(update_opacity, "value")
 
-def add_basemap_gui(self, basemaps=None, position = 'topright'):
-    """
-    Adds a basemap selector to the map.
+        control = ipyleaflet.WidgetControl(widget=opacity_slider, position=position)
+        self.add(control)
 
-    Args:
-        basemaps (dict, optional): A dictionary of basemaps. Defaults to None.
-        position (str, optional): The position of the basemap selector. Defaults to 'topright'.
-    """
-    from ipywidgets import Dropdown
-    from ipyleaflet import WidgetControl
+    def add_basemap_gui(self, basemaps=None, position="topright"):
+        """Adds a basemap GUI to the map.
 
-    if basemaps is None:
-        basemaps = {
-            "OpenStreetMap": basemaps.OpenStreetMap.Mapnik,
-            "ESRI": basemaps.Esri.WorldImagery,
-            "Strava": basemaps.Strava.All,
-            "OpenTopoMap": basemaps.OpenTopoMap.Standard
-}
+        Args:
+            position (str, optional): The position of the basemap GUI. Defaults to "topright".
+        """
 
-    dropdown = Dropdown(options=basemaps, description='Basemap:')
-    control = WidgetControl(widget=dropdown, position=position)
-    self.add_control(control)
+        basemap_selector = widgets.Dropdown(
+            options=[
+                "OpenStreetMap",
+                "OpenTopoMap",
+                "Esri.WorldImagery",
+                "Esri.NatGeoWorldMap",
+            ],
+            description="Basemap",
+        )
 
-    def on_click(change):
-        basemap = change['new']
-        self.layers = self.layers[:1]
-        self.add_basemap(basemap)
+        def update_basemap(change):
+            self.add_basemap(change["new"])
 
-    dropdown.observe(on_click, 'value')
+        basemap_selector.observe(update_basemap, "value")
+
+        control = ipyleaflet.WidgetControl(widget=basemap_selector, position=position)
+        self.add(control)
+
+    def add_toolbar(self, position="topright"):
+        """Adds a toolbar to the map.
+
+        Args:
+            position (str, optional): The position of the toolbar. Defaults to "topright".
+        """
+
+        padding = "0px 0px 0px 5px"  # upper, right, bottom, left
+
+        toolbar_button = widgets.ToggleButton(
+            value=False,
+            tooltip="Toolbar",
+            icon="wrench",
+            layout=widgets.Layout(width="28px", height="28px", padding=padding),
+        )
+
+        close_button = widgets.ToggleButton(
+            value=False,
+            tooltip="Close the tool",
+            icon="times",
+            button_style="primary",
+            layout=widgets.Layout(height="28px", width="28px", padding=padding),
+        )
+
+        toolbar = widgets.VBox([toolbar_button])
+
+        def close_click(change):
+            if change["new"]:
+                toolbar_button.close()
+                close_button.close()
+                toolbar.close()
+
+        close_button.observe(close_click, "value")
+
+        rows = 2
+        cols = 2
+        grid = widgets.GridspecLayout(
+            rows, cols, grid_gap="0px", layout=widgets.Layout(width="65px")
+        )
+
+        icons = ["folder-open", "map", "info", "question"]
+
+        for i in range(rows):
+            for j in range(cols):
+                grid[i, j] = widgets.Button(
+                    description="",
+                    button_style="primary",
+                    icon=icons[i * rows + j],
+                    layout=widgets.Layout(width="28px", padding="0px"),
+                )
+
+        def toolbar_click(change):
+            if change["new"]:
+                toolbar.children = [widgets.HBox([close_button, toolbar_button]), grid]
+            else:
+                toolbar.children = [toolbar_button]
+
+        toolbar_button.observe(toolbar_click, "value")
+        toolbar_ctrl = WidgetControl(widget=toolbar, position="topright")
+        self.add(toolbar_ctrl)
+
+        output = widgets.Output()
+        output_control = WidgetControl(widget=output, position="bottomright")
+        self.add(output_control)
+
+        def toolbar_callback(change):
+            if change.icon == "folder-open":
+                with output:
+                    output.clear_output()
+                    print(f"You can open a file")
+            elif change.icon == "map":
+                with output:
+                    output.clear_output()
+                    print(f"You can add a layer")
+            else:
+                with output:
+                    output.clear_output()
+                    print(f"Icon: {change.icon}")
+
+        for tool in grid.children:
+            tool.on_click(toolbar_callback)
