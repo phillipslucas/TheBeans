@@ -3,11 +3,14 @@
 #This doc shows you how the package was built. This is where you build code 
 #make sure the packages are installed in your environment
 
-
+#For Ipyleaflet and Ipywidgets
 import ipyleaflet
 from ipyleaflet import Map, basemaps, Marker, WidgetControl
 import ipywidgets as widgets
+from ipywidgets import Layout
 import geopandas as gpd
+
+import pysheds
 
 
 class Map(ipyleaflet.Map):
@@ -16,7 +19,7 @@ class Map(ipyleaflet.Map):
     Args:
         ipyleaflet (Map): The ipyleaflet.Map class.
     """    
-    def __init__(self, basemap = basemaps.Strava.Run, center = (48.513,-120.218), zoom = 5, **kwargs):
+    def __init__(self, basemap = "OpenStreetMap", center = (0,0), zoom = 1, **kwargs):
         """Initialize the map.
 
         Args:
@@ -41,16 +44,15 @@ class Map(ipyleaflet.Map):
         if layer_control_flag:
             self.add_layers_control()
 
-        # self.add_toolbar()
-
-#ensure basemap dropdown is closed
-        self.basemap_dropdown_open = False
+        #self.add_toolbar()
 
 
     def add_tile_layer(self, url, name, **kwargs):
         layer = ipyleaflet.TileLayer(url=url, name=name, **kwargs)
         self.add_layer(layer)
     
+
+
     #This block means you can call up a basemap based on a string.
     #You can call up the basemap without knowing the url
     def add_basemap(self, name):
@@ -68,10 +70,16 @@ class Map(ipyleaflet.Map):
         """
     
         if isinstance(name, str):
-            url = eval(f"basemaps.{name}").build_url()
-            self.add_tile_layer(url, name)
+            try:
+                url = eval(f"basemaps.{name}").build_url()
+                self.add_tile_layer(url, name)
+            except ValueError:
+                print(f"could not build '{name}")
         else:
             self.add(name)
+        
+
+
 
     def add_layers_control(self, position='topright'):
         """Adds a layers control to the map.
@@ -80,6 +88,7 @@ class Map(ipyleaflet.Map):
             position (str, optional): The position of the layers control. Defaults to "topright".
         """
         self.add_control(ipyleaflet.LayersControl(position=position))
+
 
 
     
@@ -105,6 +114,8 @@ class Map(ipyleaflet.Map):
         layer = ipyleaflet.GeoJSON(data=data, name=name, **kwargs)
         self.add(layer)
 
+
+
     def add_shp(self, data, name="shp", **kwargs):
         """
         Adds a shapefile to the current map.
@@ -128,6 +139,8 @@ class Map(ipyleaflet.Map):
                 data = shp.__geo_interface__
 
         self.add_geojson(data, name, **kwargs)
+
+
 
     # def add_vector(self, data, name = "vector", **kwargs):
     #     """Adds a vector layer to the map.
@@ -175,6 +188,8 @@ class Map(ipyleaflet.Map):
       
     #     self.add_geojson(geojson_data, name, **kwargs)
     
+
+
     def add_image(self, url, bounds, name="image", **kwargs):
         """
         Adds an image to the current map.
@@ -192,6 +207,8 @@ class Map(ipyleaflet.Map):
 
         image = ipyleaflet.ImageOverlay(url=url, bounds=bounds, name="image", **kwargs)
         self.add_layer(image)
+
+
 
     def add_raster(self, data, name="raster", zoom_to_layer=True, **kwargs):
         """Adds a raster layer to the map.
@@ -215,6 +232,8 @@ class Map(ipyleaflet.Map):
             self.center = client.center()
             self.zoom = client.default_zoom
 
+
+
     def add_zoom_slider(self):
         """
         Adds a zoom slider to the map.
@@ -223,6 +242,8 @@ class Map(ipyleaflet.Map):
 
         zoom_slider = ipyleaflet.ZoomControl(position='topright')
         self.add_control(zoom_slider)
+
+
 
 
     def add_widget(self, widget, position="topright"):
@@ -234,6 +255,8 @@ class Map(ipyleaflet.Map):
         """
         control = ipyleaflet.WidgetControl(widget=widget, position=position)
         self.add(control)
+
+
 
 
     def add_opacity_slider(
@@ -263,49 +286,74 @@ class Map(ipyleaflet.Map):
         control = ipyleaflet.WidgetControl(widget=opacity_slider, position=position)
         self.add(control)
 
+
+
+
+
+
+    #basemap dropdown menu widget and behavior
     def add_basemap_gui(self, basemaps=None, position="topright"):
         """Adds a basemap GUI to the map.
 
         Args:
             position (str, optional): The position of the basemap GUI. Defaults to "topright".
         """
-#basemap drop down, toggle button for drop down
-        basemap_selector = widgets.Dropdown(  #basemap dropdown, can i import full ipyleaflef library? library in lecture?
-            options=[
-                "OpenStreetMap", #build_url not working
+        #Creates list of all available basemaps for selection, many KeyErrors
+        # from ipyleaflet import basemaps as base
+
+        # options = []
+
+        # for i in base:
+        #     options.append(i)
+
+        #dropdown gizmo
+        basemap_selector = widgets.Dropdown( 
+            options= [
+                "OpenStreetMap",
                 "OpenTopoMap",
                 "Esri.WorldImagery",
-                "NASAGIBS.ModisAquaTrueColorCR", # NOT WORKING
+                "Esri.NatGeoWorldMap",
+                "NASAGIBS.ModisTerraTrueColorCR",
+                "NASAGIBS.ModisTerraBands367CR",
+                "NASAGIBS.ModisTerraBands721CR",
+                "NASAGIBS.ModisAquaTrueColorCR",
+                "NASAGIBS.ModisAquaBands721CR",
+                "NASAGIBS.ViirsEarthAtNight2012",
             ],
-            value = "OpenTopoMap",
+            value = "OpenStreetMap",
             description="Basemap",
         )
 
-        toggle_button = widgets.Button(
+        #close button for dropdown menu
+        close_button = widgets.Button(
             description= "",
             button_style = "primary",
             tooltip = "Dropdown Toggle",
             icon = "times",
+            layout = Layout(width ="35px") #less than 35 add noise
         )
-        toggle_button.layout.width = "30px"
+        
+        basebox = widgets.HBox([basemap_selector, close_button]) #widget box
 
-        # def toggle_dropdown(b):
-        #     if basemap_selector.layout.display == 'none':
-        #         basemap_selector.layout.display = ""
-        #         toggle_button.icon = "times"
-        #     else:
-        #         basemap_selector.layout.display =="none"
-        #         toggle_button.icon= "plus"
-        #     toggle_button.on_click(toggle_dropdown)
-            
-        def update_basemap(change):
+        #actions for buttons and button control
+        def on_click(change):
             self.add_basemap(change["new"])
-        basemap_selector.observe(update_basemap, "value")
+        basemap_selector.observe(on_click, "value")
 
-        box = widgets.HBox([basemap_selector, toggle_button])
+        def close_click(change):
+            basemap_selector.close()
+            close_button.close()
+    
 
-        control = ipyleaflet.WidgetControl(widget=box, position=position)
+        close_button.on_click(close_click)
+
+
+        control = ipyleaflet.WidgetControl(widget=basebox, position=position)
         self.add(control)
+
+
+
+
 
     def add_toolbar(self, position="topright"): #add toolbar functionality, basemap gui button, how keep toolbar from disappearing, remove basemap widget
         """Adds a toolbar to the map.
@@ -333,6 +381,7 @@ class Map(ipyleaflet.Map):
 
         toolbar = widgets.VBox([toolbar_button])
 
+
         def close_click(change):
             if change["new"]:
                 toolbar_button.close()
@@ -357,6 +406,8 @@ class Map(ipyleaflet.Map):
                     icon=icons[i * rows + j],
                     layout=widgets.Layout(width="28px", padding="0px"),
                 )
+
+
         #click signal to backend/frontend
         def on_click(change):
             if change["new"]:
@@ -373,7 +424,11 @@ class Map(ipyleaflet.Map):
         output_control = WidgetControl(widget=output, position="bottomright")
         self.add(output_control)
 
-        def toolbar_callback(change): #links to actions, add basemap gui
+
+
+
+
+        def toolbar_callback(change): #links to actions to buttons,
             if change.icon == "folder-open":
                 with output:
                     output.clear_output()
@@ -381,7 +436,17 @@ class Map(ipyleaflet.Map):
             elif change.icon == "map":
                 self.add_basemap_gui() #call basemap selector
                 with output:           #how to clear?
-                    close_button.on_click(close_click)
+                    # close_button.on_click(close_click)
+                    output.clear_output()
+                    print("change the basemap")
+            elif change.icon == "info":
+                with output:
+                    output.clear_output()
+                    print("There is no info here.")
+            elif change.icon == "question":
+                with output:
+                    output.clear_output()
+                    print("There is no help here.")
             else:
                 with output:
                     output.clear_output()
@@ -389,6 +454,9 @@ class Map(ipyleaflet.Map):
 
         for tool in grid.children:
             tool.on_click(toolbar_callback)
+
+
+
 
 # # output of output_control?
 #     def add_textbox(self, **kawrgs) #want dec deg output for selected area/marker
