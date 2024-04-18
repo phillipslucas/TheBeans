@@ -67,11 +67,8 @@ class Map(ipyleaflet.Map):
         """
     
         if isinstance(name, str):
-            try:
-                url = eval(f"basemaps.{name}").build_url()
-                self.add_tile_layer(url, name)
-            except ValueError:
-                print(f"could not build '{name}")
+            url = eval(f"basemaps.{name}").build_url()
+            self.add_tile_layer(url, name)
         else:
             self.add(name)
         
