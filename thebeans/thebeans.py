@@ -8,9 +8,6 @@ import ipyleaflet
 from ipyleaflet import Map, basemaps, Marker, WidgetControl
 import ipywidgets as widgets
 from ipywidgets import Layout
-import geopandas as gpd
-
-import pysheds
 
 
 class Map(ipyleaflet.Map):
