@@ -7,6 +7,7 @@
 import ipyleaflet
 from ipyleaflet import Map, basemaps, Marker, WidgetControl
 import ipywidgets as widgets
+import geopandas as gpd
 
 
 class Map(ipyleaflet.Map):
@@ -40,7 +41,10 @@ class Map(ipyleaflet.Map):
         if layer_control_flag:
             self.add_layers_control()
 
-        self.add_toolbar()
+        # self.add_toolbar()
+
+#ensure basemap dropdown is closed
+        self.basemap_dropdown_open = False
 
 
     def add_tile_layer(self, url, name, **kwargs):
@@ -78,7 +82,7 @@ class Map(ipyleaflet.Map):
         self.add_control(ipyleaflet.LayersControl(position=position))
 
 
-    #3/18 lecuture
+    
     def add_geojson(self, data, name="geojson", **kwargs):
         """Adds a GeoJSON layer to the map.
 
@@ -86,7 +90,7 @@ class Map(ipyleaflet.Map):
             data (str | dict): The GeoJSON data as a string or a dictionary.
             name (str, optional): The name of the layer. Defaults to "geojson".
         """
-        import json
+        
 
         if isinstance(data, str):
             with open(data) as f:
@@ -125,6 +129,51 @@ class Map(ipyleaflet.Map):
 
         self.add_geojson(data, name, **kwargs)
 
+    # def add_vector(self, data, name = "vector", **kwargs):
+    #     """Adds a vector layer to the map.
+
+    #     Args:
+    #         data (str): The path to the vector file.
+    #         name (str, optional): The name of the layer. Defaults to "vector".
+    #     """
+    #     import geopandas as gpd
+    #     if isinstance(data, str):
+
+
+    # def add_vector(self, data, name="vector", **kwargs):
+    #     """
+    #     Adds a vector data layer to the map.
+
+    #     Parameters:
+    #         data (str or GeoDataFrame): The vector data to be added. It can be either a file path to a vector data file (GeoJSON, shapefile, etc.) or a GeoDataFrame object.
+    #         name (str): The name of the vector data layer. Default is "vector".
+    #         **kwargs: Additional keyword arguments to pass to the add_geojson() method.
+
+    #     Raises:
+    #         None
+
+    #     Returns:
+    #         None
+    #     """
+    #     if isinstance(data, str):
+    #         try:
+               
+    #             vector_data = gpd.read_file(data)
+    #         except Exception as e:
+    #             print(f"Error reading vector data from file: {e}")
+    #             return
+    #     elif isinstance(data, gpd.GeoDataFrame):
+           
+    #         vector_data = data
+    #     else:
+    #         print("Unsupported vector data format.")
+    #         return
+
+        
+    #     geojson_data = vector_data.__geo_interface__
+
+      
+    #     self.add_geojson(geojson_data, name, **kwargs)
     
     def add_image(self, url, bounds, name="image", **kwargs):
         """
@@ -165,6 +214,7 @@ class Map(ipyleaflet.Map):
         if zoom_to_layer:
             self.center = client.center()
             self.zoom = client.default_zoom
+
     def add_zoom_slider(self):
         """
         Adds a zoom slider to the map.
@@ -184,6 +234,7 @@ class Map(ipyleaflet.Map):
         """
         control = ipyleaflet.WidgetControl(widget=widget, position=position)
         self.add(control)
+
 
     def add_opacity_slider(
          self, layer_index=-1, description="Opacity", position="topright"
@@ -218,26 +269,45 @@ class Map(ipyleaflet.Map):
         Args:
             position (str, optional): The position of the basemap GUI. Defaults to "topright".
         """
-
-        basemap_selector = widgets.Dropdown(
+#basemap drop down, toggle button for drop down
+        basemap_selector = widgets.Dropdown(  #basemap dropdown, can i import full ipyleaflef library? library in lecture?
             options=[
-                "OpenStreetMap",
+                "OpenStreetMap", #build_url not working
                 "OpenTopoMap",
                 "Esri.WorldImagery",
-                "Esri.NatGeoWorldMap",
+                "NASAGIBS.ModisAquaTrueColorCR", # NOT WORKING
             ],
+            value = "OpenTopoMap",
             description="Basemap",
         )
 
+        toggle_button = widgets.Button(
+            description= "",
+            button_style = "primary",
+            tooltip = "Dropdown Toggle",
+            icon = "times",
+        )
+        toggle_button.layout.width = "30px"
+
+        # def toggle_dropdown(b):
+        #     if basemap_selector.layout.display == 'none':
+        #         basemap_selector.layout.display = ""
+        #         toggle_button.icon = "times"
+        #     else:
+        #         basemap_selector.layout.display =="none"
+        #         toggle_button.icon= "plus"
+        #     toggle_button.on_click(toggle_dropdown)
+            
         def update_basemap(change):
             self.add_basemap(change["new"])
-
         basemap_selector.observe(update_basemap, "value")
 
-        control = ipyleaflet.WidgetControl(widget=basemap_selector, position=position)
+        box = widgets.HBox([basemap_selector, toggle_button])
+
+        control = ipyleaflet.WidgetControl(widget=box, position=position)
         self.add(control)
 
-    def add_toolbar(self, position="topright"):
+    def add_toolbar(self, position="topright"): #add toolbar functionality, basemap gui button, how keep toolbar from disappearing, remove basemap widget
         """Adds a toolbar to the map.
 
         Args:
@@ -287,30 +357,31 @@ class Map(ipyleaflet.Map):
                     icon=icons[i * rows + j],
                     layout=widgets.Layout(width="28px", padding="0px"),
                 )
-
-        def toolbar_click(change):
+        #click signal to backend/frontend
+        def on_click(change):
             if change["new"]:
                 toolbar.children = [widgets.HBox([close_button, toolbar_button]), grid]
             else:
                 toolbar.children = [toolbar_button]
 
-        toolbar_button.observe(toolbar_click, "value")
+        toolbar_button.observe(on_click, "value")
         toolbar_ctrl = WidgetControl(widget=toolbar, position="topright")
         self.add(toolbar_ctrl)
 
+        #output widget confirming button click
         output = widgets.Output()
         output_control = WidgetControl(widget=output, position="bottomright")
         self.add(output_control)
 
-        def toolbar_callback(change):
+        def toolbar_callback(change): #links to actions, add basemap gui
             if change.icon == "folder-open":
                 with output:
                     output.clear_output()
                     print(f"You can open a file")
             elif change.icon == "map":
-                with output:
-                    output.clear_output()
-                    print(f"You can add a layer")
+                self.add_basemap_gui() #call basemap selector
+                with output:           #how to clear?
+                    close_button.on_click(close_click)
             else:
                 with output:
                     output.clear_output()
@@ -318,3 +389,22 @@ class Map(ipyleaflet.Map):
 
         for tool in grid.children:
             tool.on_click(toolbar_callback)
+
+# # output of output_control?
+#     def add_textbox(self, **kawrgs) #want dec deg output for selected area/marker
+#         def handle_interactions(**kwargs):
+#             latlon = kwargs.get('coordinates')
+#             latlon = [round(x,4) for x in latlon]
+#             if kwargs.get("type") == "click":
+#                 with textbox:
+#                     textbox.clear_output()
+#                     print(f"Coordinates: {latlon}")
+#             self.on_interaction(handle_interactions)
+
+#         textbox = widgets.Output()
+
+#         with textbox:
+#             textbox.clear_output()
+
+            
+#             display(textbox)
