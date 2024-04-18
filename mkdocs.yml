@@ -80,6 +80,7 @@ nav:
         - examples/csv.ipynb
         - examples/vector.ipynb
         - examples/raster.ipynb
+        - examples/Lab9_Toolbar.ipynb
     - API Reference:
           - thebeans module: thebeans.md
           - common module: common.md
