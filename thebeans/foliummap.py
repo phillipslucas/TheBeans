@@ -6,7 +6,7 @@ class Map(folium.Map):
 
 
 
-#the whole point is to adapt conventions incase one package deson't work in a given area. if ipyleaflet doesn't work then you can inmport the thebeans.foliummap module
+#the whole point is to adapt conventions incase one package doesn't work in a given area. if ipyleaflet doesn't work then you can import the thebeans.foliummap module
 # copy in modules for original module and adapt in this module
 # can export maps to .html and add to any website server
     
