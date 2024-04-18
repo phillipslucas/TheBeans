@@ -81,6 +81,8 @@ nav:
         - examples/vector.ipynb
         - examples/raster.ipynb
         - examples/Lab9_Toolbar.ipynb
+        - examples/GEE.ipynb
+        - examples/Folium.ipynb
     - API Reference:
           - thebeans module: thebeans.md
           - common module: common.md
