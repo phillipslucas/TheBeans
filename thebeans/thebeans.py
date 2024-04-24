@@ -9,6 +9,8 @@ from ipyleaflet import Map, basemaps, Marker, WidgetControl
 import ipywidgets as widgets
 from ipywidgets import Layout
 
+import pysheds
+
 
 class Map(ipyleaflet.Map):
     """Map class that inherits from ipyleaflet.Map.
@@ -429,8 +431,7 @@ class Map(ipyleaflet.Map):
                     print(f"You can open a file")
             elif change.icon == "map":
                 self.add_basemap_gui() #call basemap selector
-                with output:           #how to clear?
-                    # close_button.on_click(close_click)
+                with output:
                     output.clear_output()
                     print("change the basemap")
             elif change.icon == "info":
@@ -470,3 +471,6 @@ class Map(ipyleaflet.Map):
 
             
 #             display(textbox)
+
+
+
