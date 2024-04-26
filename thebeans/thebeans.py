@@ -59,7 +59,6 @@ class Map(ipyleaflet.Map):
 
         Args:
             name (str or object): The name of the basemap as a string, or an object representing the basemap.
-
         Raises:
             TypeError: If the name is neither a string nor an object representing a basemap.
 
