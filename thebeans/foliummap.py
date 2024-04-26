@@ -1,4 +1,5 @@
 import folium
+import streamlit_folium
 from ipyleaflet import basemaps
 
 class Map(folium.Map):
@@ -91,5 +92,26 @@ class Map(folium.Map):
         Returns:
             None
         """
+    def add_raster(self, data, name="raster", zoom_to_layer=True, **kwargs):
+        """Adds a raster layer to the map.
+
+        Args:
+            data (str): The path to the raster file.
+            name (str, optional): The name of the layer. Defaults to "raster".
+        """
+        import localtileserver
+        
+        try:
+            from localtileserver import TileClient, get_folium_tile_layer
+        except ImportError:
+            raise ImportError("Please install the localtileserver package.")
+
+        client = TileClient(data)
+        layer = get_folium_tile_layer(client, name=name, **kwargs)
+        self.add(layer)
+
+        if zoom_to_layer:
+            self.center = client.center()
+            self.zoom = client.default_zoom
 
         folium.LayerControl().add_to(self)
