@@ -10,7 +10,7 @@
 
 ## Features
 
-![alt text](https://github.com/phillipslucas/TheBeans/blob/main/docs/images/TheBeans.jpg)
+![Logo](docs/images/TheBeans.jpg)
 
 - Datat visualizations
 - Interactive Map

@@ -247,6 +247,7 @@ class Map(ipyleaflet.Map):
 
         zoom_slider = ipyleaflet.ZoomControl(position='topright')
         self.add_control(zoom_slider)
+        
 
 
 
@@ -290,6 +291,7 @@ class Map(ipyleaflet.Map):
 
         control = ipyleaflet.WidgetControl(widget=opacity_slider, position=position)
         self.add(control)
+        return control
 
 
 
@@ -549,11 +551,45 @@ class Map(ipyleaflet.Map):
         Args:
             data (_type_): Grid data input.
         """
-        self.grid.read_hydrosheds(data)
-        self.grid.accumulation(data)
-        self.grid.flowdir(data)
-        self.grid.flow_distance(data)
-        self.grid.snap_to_flow(data)
-        self.grid.catchment(data)
-        self.grid.extract_river_network(data)
-        self.grid.plot
+        grid = self.Grid.from_raster(data)
+        dem = self.read_raster(data)
+
+        #Surface Conditioning
+        fillpits = self.grid.fill_pits(dem)
+        filldepp = self.grid.fill_depressions(fillpits)
+        inflate = self.grid.resolve_flats(filldepp, eps=1e-12, max_iter=1e9)#default parameters too narrow for most large areas
+
+        #D8 Flow Direction
+        dirmap = (64, 128, 1, 2, 4, 8, 16, 32)
+
+        fdir = self.grid.flowdir(inflate, dirmap=dirmap) #fdir must be fdir
+        acc = self.grid.accumulation(data)
+
+        #pour point Methow River/Columbia River. DEFINE BY MARKER?
+        x, y = -119.912764, 48.049753
+
+        # Snap pour point to high accumulation cell
+        x_snap, y_snap = grid.snap_to_mask(acc > 10000, (x, y))
+
+        catch = grid.catchment(x=x_snap, y=y_snap, fdir=fdir, dirmap=dirmap)
+   
+
+        return fillpits, filldepp, inflate, fdir, acc, catch
+    
+        # Save the data as image files
+        plt.imsave('fillpits.png', fillpits)
+        plt.imsave('filldepp.png', filldepp)
+        plt.imsave('inflate.png', inflate)
+        plt.imsave('fdir.png', fdir)
+        plt.imsave('acc.png', acc)
+        plt.imsave('catch.png', catch)
+
+        # Add each dataset as a layer to the map
+        m.add_layer(ImageOverlay(url='fillpits.png', name='Pits'))
+        m.add_layer(ImageOverlay(url='filldepp.png', name='Depressions'))
+        m.add_layer(ImageOverlay(url='inflate.png', name='Flats'))
+        m.add_layer(ImageOverlay(url='fdir.png', name='Flow Direction'))
+        m.add_layer(ImageOverlay(url='acc.png', name='Accumulation'))
+        m.add_layer(ImageOverlay(url='catch.png', name='Catchment'))
+
+  
