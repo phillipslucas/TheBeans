@@ -10,5 +10,21 @@
 
 ## Features
 
-![alt text](https://www.tasteofhome.com/wp-content/uploads/2018/01/Hearty-Maple-Beans_exps28766_CX1995511B12_01_4bC_RMS-5.jpg?fit=700,700)
-- Coming End of Spring 2024
+![alt text](https://github.com/phillipslucas/TheBeans/blob/main/docs/images/TheBeans.jpg)
+
+- Datat visualizations
+- Interactive Map
+- Hydrologic Analysis
+- Beans
+- Beans
+- Beans
+
+### Quickstart Notebook
+[![image](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/phillipslucas/TheBeans/blob/main/docs/examples/quickstart.ipynb)
+
+## Installation Instructions
+
+You can install `thebeans` using pip:
+```bash
+$ pip install thebeans
+```

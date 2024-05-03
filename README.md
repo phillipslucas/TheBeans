@@ -4,8 +4,6 @@
 
 ![Logo](docs/images/TheBeans.jpg)
 
-# Quickstart Notebook
-[![image](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/phillipslucas/TheBeans/blob/main/docs/examples/quickstart.ipynb)
 
 
 **Python package for visualizing data, extracting coordinates and hydrologic processing.**
@@ -22,7 +20,6 @@
 -   Will do your taxes the beans.
 -   Will hydologic model the beans.
 -   Will let you add data through the toolbar the beans.
--   
 
 ## Installation Instructions
 
@@ -37,3 +34,6 @@ $ git clone https://github.com/phillipslucas/TheBeans.git
 $ cd thebeans
 $ python pyproject.toml install
 ```
+
+### Quickstart Notebook
+[![image](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/phillipslucas/TheBeans/blob/main/docs/examples/quickstart.ipynb)
