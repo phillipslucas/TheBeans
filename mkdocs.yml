@@ -76,16 +76,13 @@ nav:
     - Changelog: changelog.md
     - Report Issues: https://github.com/phillipslucas/TheBeans/issues
     - Examples:
-        - examples/ExampleBeans.ipynb
         - examples/csv.ipynb
-        - examples/vector.ipynb
-        - examples/raster.ipynb
-        - examples/Lab9_Toolbar.ipynb
+        - examples/folium.ipynb
+        - examples/pysheds.ipynb
+        - examples/quickstart.ipynb
+
     - API Reference:
           - thebeans module: thebeans.md
           - common module: common.md
           - CSVtoDF module: CSVtoDF.md
-    - Labs:
-        - Labs/lab4.ipynb
-        - Labs/lab5.ipynb
 
