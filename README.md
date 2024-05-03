@@ -5,7 +5,7 @@
 [![image](https://img.shields.io/conda/vn/conda-forge/TheBeans.svg)](https://anaconda.org/conda-forge/TheBeans)
 
 
-**Python package with the beans.**
+**Python package for visualizing data, extracting coordinates and hydrologic processing.**
 
 
 -   Free software: MIT License
@@ -17,4 +17,6 @@
 -   Will give your code the beans.
 -   Will give your life the beans.
 -   Will do your taxes the beans.
+-   Will hydologic model the beans.
+-   Will let you add data through the toolbar the beans.
 

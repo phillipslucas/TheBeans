@@ -5,9 +5,22 @@
 
 #For Ipyleaflet and Ipywidgets
 import ipyleaflet
-from ipyleaflet import Map, basemaps, Marker, WidgetControl
 import ipywidgets as widgets
+import shutil
+import geopandas as gpd
+import json
+import zipfile
+import io
+import os
+import atexit
+import tempfile
+
+from pysheds.grid import Grid
+from ipyleaflet import Map, basemaps, Marker, WidgetControl, GeoJSON, ImageOverlay
+from pyproj import CRS
 from ipywidgets import Layout
+from zipfile import ZipFile
+
 
 
 
@@ -41,9 +54,11 @@ class Map(ipyleaflet.Map):
         super().__init__(center=center, zoom=zoom, **kwargs)
         if layer_control_flag:
             self.add_layers_control()
+            self.grid = Grid()
 
         #self.add_toolbar()
 
+        
 
     def add_tile_layer(self, url, name, **kwargs):
         layer = ipyleaflet.TileLayer(url=url, name=name, **kwargs)
@@ -135,52 +150,48 @@ class Map(ipyleaflet.Map):
         self.add_geojson(data, name, **kwargs)
 
 
+    def add_vector(self, data, name="vector", extension=None, **kwargs):
+        """
+        Adds a vector layer to the current map.
 
-    # def add_vector(self, data, name = "vector", **kwargs):
-    #     """Adds a vector layer to the map.
+        Args:
+            data (str, GeoDataFrame, dict): The vector data as a string (path to file), GeoDataFrame, or a dictionary.
+            name (str, optional): The name of the layer. Defaults to "vector".
+            **kwargs: Arbitrary keyword arguments.
 
-    #     Args:
-    #         data (str): The path to the vector file.
-    #         name (str, optional): The name of the layer. Defaults to "vector".
-    #     """
-    #     import geopandas as gpd
-    #     if isinstance(data, str):
+        Raises:
+            TypeError: If the data is not in a supported format.
 
-
-    # def add_vector(self, data, name="vector", **kwargs):
-    #     """
-    #     Adds a vector data layer to the map.
-
-    #     Parameters:
-    #         data (str or GeoDataFrame): The vector data to be added. It can be either a file path to a vector data file (GeoJSON, shapefile, etc.) or a GeoDataFrame object.
-    #         name (str): The name of the vector data layer. Default is "vector".
-    #         **kwargs: Additional keyword arguments to pass to the add_geojson() method.
-
-    #     Raises:
-    #         None
-
-    #     Returns:
-    #         None
-    #     """
-    #     if isinstance(data, str):
-    #         try:
-               
-    #             vector_data = gpd.read_file(data)
-    #         except Exception as e:
-    #             print(f"Error reading vector data from file: {e}")
-    #             return
-    #     elif isinstance(data, gpd.GeoDataFrame):
-           
-    #         vector_data = data
-    #     else:
-    #         print("Unsupported vector data format.")
-    #         return
-
-        
-    #     geojson_data = vector_data.__geo_interface__
-
-      
-    #     self.add_geojson(geojson_data, name, **kwargs)
+        Returns:
+            None
+        """
+        if isinstance(data, str):
+            if data.lower().endswith(('.geojson', '.json')):
+                # Load GeoJSON directly
+                with open(data) as f:
+                    data = json.load(f)
+                self.add_geojson(data, name, **kwargs)
+            elif data.lower().endswith(('.shp')):
+                # Read shapefile using GeoPandas and convert to GeoJSON
+                gdf = gpd.read_file(data)
+                self.addlayer(gdf)
+                # self.add_geojson(gdf.__geo_interface__, name, **kwargs)
+            elif extension == '.zip':
+                # Extract shapefile from zip, read it using GeoPandas and convert to GeoJSON
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    with zipfile.ZipFile(data, 'r') as zip_ref:
+                        zip_ref.extractall(tmp_dir)
+                    shapefile_name = [file for file in os.listdir(tmp_dir) if file.endswith('.shp')][0]
+                    gdf = gpd.read_file(os.path.join(tmp_dir, shapefile_name))
+                    self.add_layer(gdf)
+            else:
+                raise TypeError("Unsupported vector data format.")
+        elif isinstance(data, gpd.GeoDataFrame):
+            self.add_geojson(data.__geo_interface__, name, **kwargs)
+        elif isinstance(data, dict):
+            self.add_geojson(data, name, **kwargs)
+        else:
+            raise TypeError("Unsupported vector data format.")
     
 
 
@@ -292,15 +303,6 @@ class Map(ipyleaflet.Map):
         Args:
             position (str, optional): The position of the basemap GUI. Defaults to "topright".
         """
-        #Creates list of all available basemaps for selection, many KeyErrors
-        # from ipyleaflet import basemaps as base
-
-        # options = []
-
-        # for i in base:
-        #     options.append(i)
-
-        #dropdown gizmo
         basemap_selector = widgets.Dropdown( 
             options= [
                 "OpenStreetMap",
@@ -373,6 +375,14 @@ class Map(ipyleaflet.Map):
             layout=widgets.Layout(height="28px", width="28px", padding=padding),
         )
 
+        open_button = widgets.ToggleButton(
+            value=False,
+            tooltip='Open a file',
+            icon='folder-open',
+            layout=widgets.Layout(height='28px', width='28px')
+        )
+
+
         toolbar = widgets.VBox([toolbar_button])
 
 
@@ -420,13 +430,12 @@ class Map(ipyleaflet.Map):
 
 
 
-
-
         def toolbar_callback(change): #links to actions to buttons,
-            if change.icon == "folder-open":
+            if change.icon == "folder-open": #file chooser callback
+                self.open_fileupload()
                 with output:
                     output.clear_output()
-                    print(f"You can open a file")
+
             elif change.icon == "map":
                 self.add_basemap_gui() #call basemap selector
                 with output:
@@ -449,26 +458,102 @@ class Map(ipyleaflet.Map):
             tool.on_click(toolbar_callback)
 
 
+    temp_files = [] #store temp files and delete on kernel restart
+    def open_fileupload(self, position="bottomright"):
+        """Handles file upload from toolbar
+        
+        Args:
+            position (str, optional): The position of the file upload control. Defaults to "bottomright".
+            """
+        fileupload = widgets.FileUpload(
+            accept='',  
+            multiple=True  # True to accept multiple files upload else False
+        )
 
+        close_button = widgets.Button(
+            description= "",
+            button_style = "primary",
+            tooltip = "Dropdown Toggle",
+            icon = "times",
+            layout = Layout(width ="35px") #less than 35 add noise
+        )
 
-# # output of output_control?
-#     def add_textbox(self, **kawrgs) #want dec deg output for selected area/marker
-#         def handle_interactions(**kwargs):
-#             latlon = kwargs.get('coordinates')
-#             latlon = [round(x,4) for x in latlon]
-#             if kwargs.get("type") == "click":
-#                 with textbox:
-#                     textbox.clear_output()
-#                     print(f"Coordinates: {latlon}")
-#             self.on_interaction(handle_interactions)
+        basebox = widgets.HBox([fileupload, close_button])
 
-#         textbox = widgets.Output()
-
-#         with textbox:
-#             textbox.clear_output()
-
+        # Define a function to handle file upload
+        def on_file_upload(change):
             
-#             display(textbox)
+            uploaded_file = change['new'][0]
+            content = uploaded_file['content'].tobytes() 
+            name = uploaded_file['name']
+            extension = os.path.splitext(name)[1]
+            
+            if extension == ".json" or extension == ".geojson":
+                data = json.loads(content.decode("utf-8"))
+                self.add_vector(data)
+            elif extension == ".tif":
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".tif") as tmp:
+                    tmp.write(content)
+                    self.temp_files.append(tmp.name)
+                    self.add_raster(tmp.name)
+            elif extension == ".shp" or extension == ".zip":
+                with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp:
+                    tmp.write(content)
+                    self.add_vector(tmp.name, name, extension)
+                #reads zipped shapefile, pulls crs from .prj, converts to geodataframe, converts to geojson, adds to map
+                # ...grab code from add_vector...
+                #     self.add_vector(gdf)
 
+        
+        # Set the function to be called when a file is uploaded
+        fileupload.observe(on_file_upload, 'value')
 
+        def close_click(change):
+            fileupload.close()
+            close_button.close()
+        close_button.on_click(close_click)
 
+        control = ipyleaflet.WidgetControl(widget=basebox, position=position)
+        self.add(control)
+
+    def cleanup(self):
+        """Clean up the map by removing all layers and controls."""
+        for temp_file in temp_files:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+    atexit.register(cleanup)   
+
+    def add_latlong_widget(self, position = "bottomleft"):
+        #can change min, max, height of box
+
+        #add output widget to bottom of the map
+        output = widgets.Output()
+        control = WidgetControl(widget=output, position=position)
+        self.add(control)  
+
+        
+        #define function to update lat long on mouse click. Can print(kwargs) to see all info
+        #can define on double click, hover, move off map, etc
+        def update_latlon(**kwargs):
+            if kwargs.get('type') == 'mousedown':
+                latlon = kwargs.get('coordinates')
+                with output:
+                    output.clear_output()
+                    print(f"Lat: {latlon[0]:.4f}, Long: {latlon[1]:.4f}")
+
+        self.on_interaction(update_latlon)
+    
+    def add_casual_hydrologic_network(self, data, **kwargs):
+        """Delineate a full hydrologic network in one click. Processing times and ease of use not guaranteed.
+
+        Args:
+            data (_type_): Grid data input.
+        """
+        self.grid.read_hydrosheds(data)
+        self.grid.accumulation(data)
+        self.grid.flowdir(data)
+        self.grid.flow_distance(data)
+        self.grid.snap_to_flow(data)
+        self.grid.catchment(data)
+        self.grid.extract_river_network(data)
+        self.grid.plot

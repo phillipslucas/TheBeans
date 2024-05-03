@@ -43,10 +43,10 @@ plugins:
     - mkdocs-jupyter:
           include_source: True
           ignore_h1_titles: True
-          execute: False
+          execute: true
           allow_errors: false
           ignore: ["conf.py"]
-          execute_ignore: ["*ignore.ipynb"]
+          execute_ignore: ["examples/pysheds.ipynb", "examples/folium.ipynb"]
           
 markdown_extensions:
     - admonition
@@ -76,16 +76,13 @@ nav:
     - Changelog: changelog.md
     - Report Issues: https://github.com/phillipslucas/TheBeans/issues
     - Examples:
-        - examples/ExampleBeans.ipynb
         - examples/csv.ipynb
-        - examples/vector.ipynb
-        - examples/raster.ipynb
-        - examples/Lab9_Toolbar.ipynb
+        - examples/folium.ipynb
+        - examples/pysheds.ipynb
+        - examples/quickstart.ipynb
+
     - API Reference:
           - thebeans module: thebeans.md
           - common module: common.md
           - CSVtoDF module: CSVtoDF.md
-    - Labs:
-        - Labs/lab4.ipynb
-        - Labs/lab5.ipynb
 
