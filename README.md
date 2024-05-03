@@ -1,8 +1,8 @@
 # TheBeans
-
-
 [![image](https://img.shields.io/pypi/v/TheBeans.svg)](https://pypi.python.org/pypi/TheBeans)
 [![image](https://img.shields.io/conda/vn/conda-forge/TheBeans.svg)](https://anaconda.org/conda-forge/TheBeans)
+
+![Logo](docs/images/TheBeans.jpg)
 
 # Quickstart Notebook
 [![image](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/phillipslucas/TheBeans/blob/main/docs/examples/quickstart.ipynb)
@@ -25,8 +25,15 @@
 -   
 
 ## Installation Instructions
-'''python
-pip install thebeans
-'''
 
+You can install `thebeans` using pip:
+```bash
+$ pip install thebeans
+```
 
+You can also install the least stable version from this repository.
+```bash
+$ git clone https://github.com/phillipslucas/TheBeans.git
+$ cd thebeans
+$ python pyproject.toml install
+```
