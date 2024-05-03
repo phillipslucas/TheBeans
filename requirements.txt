@@ -1,6 +1,5 @@
 numpy
 ipyleaflet
-pandas
 pysheds
 pandas
 matplotlib

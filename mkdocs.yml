@@ -43,10 +43,10 @@ plugins:
     - mkdocs-jupyter:
           include_source: True
           ignore_h1_titles: True
-          execute: False
+          execute: true
           allow_errors: false
           ignore: ["conf.py"]
-          execute_ignore: ["*ignore.ipynb"]
+          execute_ignore: ["examples/pysheds.ipynb", "examples/folium.ipynb"]
           
 markdown_extensions:
     - admonition
