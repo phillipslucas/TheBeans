@@ -548,31 +548,31 @@ class Map(ipyleaflet.Map):
 
         self.on_interaction(update_latlon)
 
-    # def array_to_overlay(self, array, name, **kwargs):
-    #     from PIL import Image
-    #     from io import BytesIO
-    #     import base64
-    #     import numpy as np
+    def array_to_overlay(self, array, name, **kwargs):
+        from PIL import Image
+        from io import BytesIO
+        import base64
+        import numpy as np
     
-    #     """Convert a NumPy array to an ImageOverlay and add it to the map.
+        """Convert a NumPy array to an ImageOverlay and add it to the map.
          
-    #      """
-    #     # Convert the array to an image
-    #     im = Image.fromarray(np.uint8(array))
+         """
+        # Convert the array to an image
+        im = Image.fromarray(np.uint8(array))
 
-    #     # Save the image to a BytesIO object
-    #     data = BytesIO()
-    #     im.save(data, 'PNG')
-    #     data.seek(0)
+        # Save the image to a BytesIO object
+        data = BytesIO()
+        im.save(data, 'PNG')
+        data.seek(0)
 
-    #     # Encode the BytesIO object as a base64 string
-    #     base64_str = "data:image/png;base64," + base64.b64encode(data.read()).decode()
+        # Encode the BytesIO object as a base64 string
+        base64_str = "data:image/png;base64," + base64.b64encode(data.read()).decode()
 
-    #     # Create an ImageOverlay with the base64 string as the URL
-    #     overlay = ImageOverlay(url=base64_str, name=name)
+        # Create an ImageOverlay with the base64 string as the URL
+        overlay = ImageOverlay(url=base64_str, name=name)
 
-    #     # Add the overlay to the map
-    #     self.add_layer(overlay)
+        # Add the overlay to the map
+        self.add_layer(overlay)
     
     def add_casual_hydrologic_network(self, url, **kwargs):
         from pysheds.grid import Grid
