@@ -2,6 +2,6 @@
 
 __author__ = """Lucas Phillips"""
 __email__ = "lphill57@vols.utk.edu"
-__version__ = "0.0.8"
+__version__ = "0.1.0"
 
 from .thebeans import Map
