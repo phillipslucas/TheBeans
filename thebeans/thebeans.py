@@ -623,8 +623,7 @@ class Map(ipyleaflet.Map):
                 self.add_layer(overlay)
 
 
-        #Download raster file from localtileserver
-        # tile_client = self.add_raster(url)
+      
         rasname = os.path.basename(url)
         response = requests.get(url)
         with open(rasname, 'wb') as f:
