@@ -596,7 +596,7 @@ class Map(ipyleaflet.Map):
         #     array_min, array_max = array.min(), array.max()
         #     return (array - array_min) / (array_max - array_min)
         
-        # #hanlde array to overlay visualization
+        # #handle array to overlay visualization
         def array_to_image_overlay(array, name):
                 """Convert a NumPy array to an ImageOverlay and add it to the map."""
                 # Convert the array to an image
