@@ -465,7 +465,7 @@ class Map(ipyleaflet.Map):
 
     temp_files = [] #store temp files and delete on kernel restart
     def open_fileupload(self, position="bottomright"):
-        """Handles file upload from toolbar
+        """Handles file upload from toolbar and passes file to proper method.
         
         Args:
             position (str, optional): The position of the file upload control. Defaults to "bottomright".
@@ -529,6 +529,11 @@ class Map(ipyleaflet.Map):
         atexit.register(cleanup)   
 
     def add_latlong_widget(self, position = "bottomleft"):
+        """Adds a widget to display the latitude and longitude of the mouse pointer click.
+
+        Args:
+            position (str, optional): _description_. Defaults to "bottomleft".
+        """
         #can change min, max, height of box
 
         #add output widget to bottom of the map
@@ -549,14 +554,14 @@ class Map(ipyleaflet.Map):
         self.on_interaction(update_latlon)
 
     def array_to_overlay(self, array, name, **kwargs):
+        """Convert a NumPy array to an ImageOverlay and add it to the map."""
+
         from PIL import Image
         from io import BytesIO
         import base64
         import numpy as np
     
-        """Convert a NumPy array to an ImageOverlay and add it to the map.
-         
-         """
+      
         # Convert the array to an image
         im = Image.fromarray(np.uint8(array))
 
@@ -575,6 +580,11 @@ class Map(ipyleaflet.Map):
         self.add_layer(overlay)
     
     def add_casual_hydrologic_network(self, url, **kwargs):
+        """Delineate a full hydrologic network in one click. Processing times and ease of use not guaranteed.
+        
+        Args:
+            url (str): The URL of the raster file.
+        """
         from pysheds.grid import Grid
         import requests
         import matplotlib.pyplot as plt
@@ -585,11 +595,7 @@ class Map(ipyleaflet.Map):
         import base64
         import numpy as np
 
-        """Delineate a full hydrologic network in one click. Processing times and ease of use not guaranteed.
-
-        Args:
-            data (_type_): Grid data input.
-        """
+       
         # def normalize(array):
         #     """Normalize a NumPy array to the range [0, 1]."""
         #     array = array.astype(int)  # Convert boolean arrays to integer
