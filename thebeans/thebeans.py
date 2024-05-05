@@ -15,7 +15,8 @@ import os
 import atexit
 import tempfile
 
-from pysheds.grid import Grid
+
+
 from ipyleaflet import Map, basemaps, Marker, WidgetControl, GeoJSON, ImageOverlay
 from pyproj import CRS
 from ipywidgets import Layout
@@ -54,7 +55,7 @@ class Map(ipyleaflet.Map):
         super().__init__(center=center, zoom=zoom, **kwargs)
         if layer_control_flag:
             self.add_layers_control()
-            self.grid = Grid()
+            # self.grid = Grid()
 
         #self.add_toolbar()
 
@@ -237,6 +238,8 @@ class Map(ipyleaflet.Map):
             self.center = client.center()
             self.zoom = client.default_zoom
 
+        #return client to use in other functions
+        return client
 
 
     def add_zoom_slider(self):
@@ -518,12 +521,12 @@ class Map(ipyleaflet.Map):
         control = ipyleaflet.WidgetControl(widget=basebox, position=position)
         self.add(control)
 
-    def cleanup(self):
-        """Clean up the map by removing all layers and controls."""
-        for temp_file in temp_files:
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-    atexit.register(cleanup)   
+        def cleanup(self):
+            """Clean up the map by removing all layers and controls."""
+            for temp_file in temp_files:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+        atexit.register(cleanup)   
 
     def add_latlong_widget(self, position = "bottomleft"):
         #can change min, max, height of box
@@ -544,26 +547,103 @@ class Map(ipyleaflet.Map):
                     print(f"Lat: {latlon[0]:.4f}, Long: {latlon[1]:.4f}")
 
         self.on_interaction(update_latlon)
+
+    # def array_to_overlay(self, array, name, **kwargs):
+    #     from PIL import Image
+    #     from io import BytesIO
+    #     import base64
+    #     import numpy as np
     
-    def add_casual_hydrologic_network(self, data, **kwargs):
+    #     """Convert a NumPy array to an ImageOverlay and add it to the map.
+         
+    #      """
+    #     # Convert the array to an image
+    #     im = Image.fromarray(np.uint8(array))
+
+    #     # Save the image to a BytesIO object
+    #     data = BytesIO()
+    #     im.save(data, 'PNG')
+    #     data.seek(0)
+
+    #     # Encode the BytesIO object as a base64 string
+    #     base64_str = "data:image/png;base64," + base64.b64encode(data.read()).decode()
+
+    #     # Create an ImageOverlay with the base64 string as the URL
+    #     overlay = ImageOverlay(url=base64_str, name=name)
+
+    #     # Add the overlay to the map
+    #     self.add_layer(overlay)
+    
+    def add_casual_hydrologic_network(self, url, **kwargs):
+        from pysheds.grid import Grid
+        import requests
+        import matplotlib.pyplot as plt
+        import matplotlib.colors as colors
+        from matplotlib import cm
+        from PIL import Image
+        from io import BytesIO
+        import base64
+        import numpy as np
+
         """Delineate a full hydrologic network in one click. Processing times and ease of use not guaranteed.
 
         Args:
             data (_type_): Grid data input.
         """
-        grid = self.Grid.from_raster(data)
-        dem = self.read_raster(data)
+        # def normalize(array):
+        #     """Normalize a NumPy array to the range [0, 1]."""
+        #     array = array.astype(int)  # Convert boolean arrays to integer
+        #     array_min, array_max = array.min(), array.max()
+        #     return (array - array_min) / (array_max - array_min)
+        
+        # #hanlde array to overlay visualization
+        def array_to_image_overlay(array, name):
+                """Convert a NumPy array to an ImageOverlay and add it to the map."""
+                # Convert the array to an image
+                im = Image.fromarray(np.uint8(array))
+
+                # Save the image to a BytesIO object
+                data = BytesIO()
+                im.save(data, 'PNG')
+                data.seek(0)
+
+                # Encode the BytesIO object as a base64 string
+                base64_str = "data:image/png;base64," + base64.b64encode(data.read()).decode()
+
+                # Create an ImageOverlay with the base64 string as the URL
+                overlay = ImageOverlay(url=base64_str, name=name)
+
+                # Add the overlay to the map
+                self.add_layer(overlay)
+
+
+        #Download raster file from localtileserver
+        # tile_client = self.add_raster(url)
+        rasname = os.path.basename(url)
+        response = requests.get(url)
+        with open(rasname, 'wb') as f:
+            f.write(response.content)
+
+        grid = Grid.from_raster(rasname, data_name="dem", set_nodata = -999999)
+        dem = grid.read_raster(rasname)
+
+        # response = requests.get(data_url)
+        # with tempfile.NamedTemporaryFile(delete=False, suffix=".tif") as tmp:
+        #     tmp.write(response.content)
+        #     data = tmp.name
+        #     grid = self.Grid.from_raster(data)
+        #     dem = self.read_raster(data) 
 
         #Surface Conditioning
-        fillpits = self.grid.fill_pits(dem)
-        filldepp = self.grid.fill_depressions(fillpits)
-        inflate = self.grid.resolve_flats(filldepp, eps=1e-12, max_iter=1e9)#default parameters too narrow for most large areas
+        fillpits = grid.fill_pits(dem)
+        filldepp = grid.fill_depressions(fillpits)
+        inflate = grid.resolve_flats(filldepp, eps=1e-12, max_iter=1e9)#default parameters too narrow for most large areas
 
         #D8 Flow Direction
         dirmap = (64, 128, 1, 2, 4, 8, 16, 32)
 
-        fdir = self.grid.flowdir(inflate, dirmap=dirmap) #fdir must be fdir
-        acc = self.grid.accumulation(data)
+        fdir = grid.flowdir(inflate, dirmap=dirmap) #fdir must be fdir
+        acc = grid.accumulation(fdir)
 
         #pour point Methow River/Columbia River. DEFINE BY MARKER?
         x, y = -119.912764, 48.049753
@@ -572,24 +652,55 @@ class Map(ipyleaflet.Map):
         x_snap, y_snap = grid.snap_to_mask(acc > 10000, (x, y))
 
         catch = grid.catchment(x=x_snap, y=y_snap, fdir=fdir, dirmap=dirmap)
-   
+        catch_view = grid.view(catch)
 
-        return fillpits, filldepp, inflate, fdir, acc, catch
-    
+        #assign colormap
+        # fdir = cm.viridis(normalize(fdir))
+        # acc = cm.viridis(normalize(acc))
+        # catch = cm.viridis(normalize(catch))
+
         # Save the data as image files
-        plt.imsave('fillpits.png', fillpits)
-        plt.imsave('filldepp.png', filldepp)
-        plt.imsave('inflate.png', inflate)
-        plt.imsave('fdir.png', fdir)
-        plt.imsave('acc.png', acc)
-        plt.imsave('catch.png', catch)
+        array_to_image_overlay(fdir, 'Flow Direction')
+        array_to_image_overlay(acc, 'Accumulation')
+        array_to_image_overlay(catch, 'Catchment')
 
         # Add each dataset as a layer to the map
-        m.add_layer(ImageOverlay(url='fillpits.png', name='Pits'))
-        m.add_layer(ImageOverlay(url='filldepp.png', name='Depressions'))
-        m.add_layer(ImageOverlay(url='inflate.png', name='Flats'))
-        m.add_layer(ImageOverlay(url='fdir.png', name='Flow Direction'))
-        m.add_layer(ImageOverlay(url='acc.png', name='Accumulation'))
-        m.add_layer(ImageOverlay(url='catch.png', name='Catchment'))
+        # self.array_to_overlay(fdir, 'Flow Direction')
+        # self.array_to_overlay(acc, 'Accumulation')
+        # self.array_to_overlay(catch, 'Catchment')
 
-  
+        #plot fdir
+        fig = plt.figure(figsize=(8,6))
+        fig.patch.set_alpha(0)
+
+        plt.imshow(fdir, extent=grid.extent, cmap='viridis', zorder=2)
+        boundaries = ([0] + sorted(list(dirmap)))
+        plt.colorbar(boundaries= boundaries,
+                    values=sorted(dirmap))
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.title('Flow direction grid', size=14)
+        plt.grid(zorder=-1)
+        plt.tight_layout()
+
+        # Plot acc
+        fig, ax = plt.subplots(figsize=(8,6))
+        fig.patch.set_alpha(0)
+        im = ax.imshow(acc, zorder=2,
+                    cmap='cubehelix',
+                    norm=colors.LogNorm(1, acc.max()),
+                    interpolation='bilinear')
+        plt.colorbar(im, ax=ax, label='Upstream Cells')
+        plt.title('Flow Accumulation', size=14)
+        plt.tight_layout()
+
+        # Plot catch
+        fig, ax = plt.subplots(figsize=(8,6))
+        fig.patch.set_alpha(0)
+
+        plt.grid('on', zorder=0)
+        im = ax.imshow(np.where(catch_view, catch_view, np.nan), extent=grid.extent,
+                    zorder=1, cmap='Greys_r')
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.title('Delineated Catchment', size=14)
